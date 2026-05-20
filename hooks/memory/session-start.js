@@ -18,6 +18,8 @@ import { execSync } from "child_process";
 const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
 const claudekitBin = join(homedir(), ".bun", "bin", "claudekit");
 
+let freshInstall = false;
+
 if (pluginRoot && !existsSync(claudekitBin)) {
   try {
     // Install npm deps (@clack/prompts, picocolors)
@@ -41,9 +43,25 @@ if (pluginRoot && !existsSync(claudekitBin)) {
           `\n${MARKER}\nexport BUN_INSTALL="$HOME/.bun"\nexport PATH="$BUN_INSTALL/bin:$PATH"\n`,
       );
     }
+
+    freshInstall = true;
   } catch {
     // Never block session start — setup failure is non-fatal
   }
+}
+
+// After fresh install, prompt user to configure tools before doing anything else
+if (freshInstall) {
+  console.log(
+    JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: "SessionStart",
+        additionalContext:
+          "**claude-kit installed!** Open a new terminal tab and run `claudekit` to choose which tools to enable. Until then, all tools are on by default.",
+      },
+    }),
+  );
+  process.exit(0);
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────

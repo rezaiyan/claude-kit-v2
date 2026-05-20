@@ -3,6 +3,7 @@ import {
   intro,
   outro,
   select,
+  multiselect,
   text,
   confirm,
   spinner,
@@ -11,14 +12,83 @@ import {
   cancel,
 } from "@clack/prompts";
 import pc from "picocolors";
-import { getConfig, saveConfig } from "../lib/config.js";
+import { existsSync } from "fs";
 import { homedir } from "os";
+import { getConfig, saveConfig, CONFIG_PATH } from "../lib/config.js";
+import { TOOLS } from "../lib/tools.js";
+
+// ── Entry ──────────────────────────────────────────────────────────────────────
 
 async function main() {
   console.clear();
+
+  if (!existsSync(CONFIG_PATH)) {
+    await onboarding();
+    return;
+  }
+
   intro(pc.bgCyan(pc.black(" claude-kit ")));
   await mainMenu();
   outro("Done.");
+}
+
+// ── Onboarding (first run) ─────────────────────────────────────────────────────
+
+async function onboarding() {
+  intro(pc.bgCyan(pc.black(" claude-kit ")));
+
+  note(
+    "Looks like this is your first time here.\nLet's set up your tools — you can change this anytime.",
+    "Welcome",
+  );
+
+  // Show each tool with its full description
+  const toolEntries = Object.entries(TOOLS);
+  const descBlock = toolEntries
+    .map(([, t]) => `${pc.bold(t.label)}  ${pc.dim(t.hint)}\n${t.description}`)
+    .join("\n\n");
+  note(descBlock, "Available tools");
+
+  const selected = await multiselect({
+    message: "Which tools would you like to enable?",
+    options: toolEntries.map(([key, tool]) => ({
+      value: key,
+      label: tool.label,
+      hint: tool.hint,
+    })),
+    initialValues: toolEntries
+      .filter(([, t]) => t.enabledByDefault)
+      .map(([k]) => k),
+  });
+
+  if (isCancel(selected)) {
+    cancel("Setup cancelled. Run claudekit anytime to configure.");
+    process.exit(0);
+  }
+
+  const config = getConfig();
+  for (const [key] of toolEntries) {
+    config.tools[key] = {
+      ...(config.tools[key] ?? {}),
+      enabled: selected.includes(key),
+    };
+  }
+  saveConfig(config);
+
+  const enabledLabels = selected.map((k) => TOOLS[k]?.label ?? k);
+  if (enabledLabels.length > 0) {
+    note(
+      enabledLabels.map((l) => `${pc.green("●")} ${l}`).join("\n"),
+      "✓ Enabled",
+    );
+  } else {
+    note(
+      pc.dim("No tools enabled. Run claudekit to enable tools later."),
+      "✓ Saved",
+    );
+  }
+
+  outro("All set. Run claudekit anytime to adjust settings.");
 }
 
 // ── Main menu ──────────────────────────────────────────────────────────────────
@@ -26,18 +96,19 @@ async function main() {
 async function mainMenu() {
   while (true) {
     const config = getConfig();
-    const memEnabled = config.tools.memory.enabled;
+
+    const toolOptions = Object.entries(TOOLS).map(([key, tool]) => {
+      const enabled = config.tools[key]?.enabled !== false;
+      return {
+        value: key,
+        label: tool.label,
+        hint: enabled ? pc.green("enabled") : pc.dim("disabled"),
+      };
+    });
 
     const choice = await select({
       message: "Select a tool",
-      options: [
-        {
-          value: "memory",
-          label: "Memory",
-          hint: memEnabled ? pc.green("enabled") : pc.dim("disabled"),
-        },
-        { value: "exit", label: "Exit" },
-      ],
+      options: [...toolOptions, { value: "exit", label: "Exit" }],
     });
 
     if (isCancel(choice) || choice === "exit") break;
@@ -210,7 +281,6 @@ async function clearSessions() {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-/** Import db.js after optionally setting CLAUDE_KIT_DB_PATH from config. */
 async function resolvedDb() {
   const cfg = getConfig();
   if (cfg.tools.memory.dbPath) {
@@ -221,8 +291,6 @@ async function resolvedDb() {
   }
   return import("../hooks/memory/db.js");
 }
-
-// ── Entry ──────────────────────────────────────────────────────────────────────
 
 main().catch((e) => {
   cancel(String(e.message ?? e));
