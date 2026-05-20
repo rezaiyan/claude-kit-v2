@@ -155,7 +155,7 @@ If installed via the marketplace UI this is automatic. To register manually:
     }
   },
   "enabledPlugins": {
-    "memory@claude-kit-v2": true
+    "claude-kit-v2@claude-kit-v2": true
   }
 }
 ```
