@@ -9,6 +9,7 @@ Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 | Plugin | What it does |
 |--------|-------------|
 | [memory](#memory) | Remembers what you worked on across sessions |
+| [notify](#desktop-notify) | macOS desktop notification when Claude finishes a task |
 
 ---
 
@@ -158,6 +159,44 @@ If installed via the marketplace UI this is automatic. To register manually:
   }
 }
 ```
+
+---
+
+## Desktop Notify
+
+macOS desktop notification when Claude Code finishes responding. Shows the project name so you know which session completed without switching windows.
+
+No dependencies. Uses `osascript` — ships with every Mac.
+
+### How it works
+
+```
+Claude stops responding
+  └── Stop hook fires
+        └── Sends: "Task complete in <project>" via osascript
+```
+
+Fires on every Stop event — same lifecycle point as memory's summary write. Silently skips on non-macOS platforms.
+
+### Toggle
+
+```bash
+claudekit
+# → select "Desktop Notify" → Enable / Disable
+```
+
+Or disable in config directly:
+
+```json
+// ~/.claude-kit/config.json
+{
+  "tools": {
+    "notify": { "enabled": false }
+  }
+}
+```
+
+---
 
 ### Run tests
 

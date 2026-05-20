@@ -113,6 +113,7 @@ async function mainMenu() {
 
     if (isCancel(choice) || choice === "exit") break;
     if (choice === "memory") await memoryMenu();
+    if (choice === "notify") await notifyMenu();
   }
 }
 
@@ -161,6 +162,44 @@ async function memoryMenu() {
 
     if (isCancel(choice) || choice === "back") break;
     await handleMemoryAction(choice);
+  }
+}
+
+// ── Notify tool menu ───────────────────────────────────────────────────────────
+
+async function notifyMenu() {
+  while (true) {
+    const config = getConfig();
+    const notif = config.tools.notify;
+
+    note(
+      `Status    ${notif.enabled ? pc.green("● enabled") : pc.red("○ disabled")}`,
+      "Desktop Notify",
+    );
+
+    const choice = await select({
+      message: "Action",
+      options: [
+        {
+          value: "toggle",
+          label: notif.enabled ? pc.red("Disable") : pc.green("Enable"),
+        },
+        { value: "back", label: "Back" },
+      ],
+    });
+
+    if (isCancel(choice) || choice === "back") break;
+
+    if (choice === "toggle") {
+      config.tools.notify.enabled = !notif.enabled;
+      saveConfig(config);
+      note(
+        config.tools.notify.enabled
+          ? pc.green("Desktop notifications enabled.")
+          : pc.dim("Desktop notifications disabled."),
+        "✓ Saved",
+      );
+    }
   }
 }
 
