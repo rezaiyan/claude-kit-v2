@@ -69,6 +69,21 @@ if (freshInstall) {
 // Config may not be importable yet if deps just installed — use dynamic import
 const { isToolEnabled, getConfig } = await import("../../lib/config.js");
 
+// ── Spec workflow sync ────────────────────────────────────────────────────────
+// Ensure ~/.claude/commands/ matches the spec tool's enabled state.
+// Runs every session start — idempotent, silent on failure.
+try {
+  const { installSpec, uninstallSpec } =
+    await import("../../lib/spec-installer.js");
+  if (isToolEnabled("spec")) {
+    installSpec();
+  } else {
+    uninstallSpec();
+  }
+} catch {
+  /* never block session start */
+}
+
 if (!isToolEnabled("memory")) {
   console.log(JSON.stringify({}));
   process.exit(0);

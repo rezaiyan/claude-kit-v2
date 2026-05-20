@@ -6,5 +6,12 @@
   "homepage": "https://github.com/rezaiyan/claude-kit-v2",
   "repository": "https://github.com/rezaiyan/claude-kit-v2",
   "license": "MIT",
-  "keywords": ["memory", "sessions", "context", "sqlite", "productivity"]
+  "keywords": ["memory", "sessions", "context", "sqlite", "productivity"],
+  "hooksConfig": "hooks/hooks.json",
+  "skills": [
+    { "name": "spec",       "path": "lib/spec-workflow/skills/spec" },
+    { "name": "implement",  "path": "lib/spec-workflow/skills/implement" },
+    { "name": "tdd",        "path": "lib/spec-workflow/skills/tdd" },
+    { "name": "verify",     "path": "lib/spec-workflow/skills/verify" }
+  ]
 }

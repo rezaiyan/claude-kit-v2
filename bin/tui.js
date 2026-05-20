@@ -114,6 +114,7 @@ async function mainMenu() {
     if (isCancel(choice) || choice === "exit") break;
     if (choice === "memory") await memoryMenu();
     if (choice === "notify") await notifyMenu();
+    if (choice === "spec") await specMenu();
   }
 }
 
@@ -199,6 +200,104 @@ async function notifyMenu() {
           : pc.dim("Desktop notifications disabled."),
         "✓ Saved",
       );
+    }
+  }
+}
+
+// ── Spec workflow menu ─────────────────────────────────────────────────────────
+
+async function specMenu() {
+  const { installSpec, uninstallSpec, specStatus } =
+    await import("../lib/spec-installer.js");
+
+  while (true) {
+    const config = getConfig();
+    const spec = config.tools.spec;
+    const statuses = specStatus();
+
+    const ours = statuses.filter((s) => s.state === "ours").map((s) => s.name);
+    const foreign = statuses
+      .filter((s) => s.state === "foreign")
+      .map((s) => s.name);
+    const missing = statuses
+      .filter((s) => s.state === "missing")
+      .map((s) => s.name);
+
+    const lines = [
+      `Status    ${spec.enabled ? pc.green("● enabled") : pc.red("○ disabled")}`,
+      `Commands  /spec  /implement  /tdd  /verify`,
+      `Location  ${pc.dim("~/.claude/commands/")}`,
+    ];
+    if (ours.length)
+      lines.push(`Installed ${pc.green(ours.map((n) => `/${n}`).join("  "))}`);
+    if (foreign.length)
+      lines.push(
+        `${pc.yellow("⚠ foreign")}  ${foreign.map((n) => `/${n}`).join("  ")} — not managed by claude-kit-v2`,
+      );
+    if (missing.length && spec.enabled)
+      lines.push(
+        `${pc.dim("missing")}   ${missing.map((n) => `/${n}`).join("  ")} — will install on next session start`,
+      );
+
+    note(lines.join("\n"), "Spec Workflow");
+
+    const choice = await select({
+      message: "Action",
+      options: [
+        {
+          value: "toggle",
+          label: spec.enabled ? pc.red("Disable") : pc.green("Enable"),
+          hint: spec.enabled
+            ? "removes installed commands"
+            : "installs commands now",
+        },
+        { value: "back", label: "Back" },
+      ],
+    });
+
+    if (isCancel(choice) || choice === "back") break;
+
+    if (choice === "toggle") {
+      config.tools.spec.enabled = !spec.enabled;
+      saveConfig(config);
+
+      if (config.tools.spec.enabled) {
+        const s = spinner();
+        s.start("Installing commands…");
+        const result = installSpec();
+        s.stop("");
+        const parts = [];
+        if (result.installed.length)
+          parts.push(
+            pc.green(
+              `Installed: ${result.installed.map((n) => `/${n}`).join(", ")}`,
+            ),
+          );
+        if (result.skipped.length)
+          parts.push(
+            pc.yellow(
+              `Skipped (foreign files): ${result.skipped.map((n) => `/${n}`).join(", ")}`,
+            ),
+          );
+        note(parts.join("\n") || pc.dim("Nothing to install."), "✓ Enabled");
+      } else {
+        const s = spinner();
+        s.start("Removing commands…");
+        const result = uninstallSpec();
+        s.stop("");
+        const parts = [];
+        if (result.removed.length)
+          parts.push(
+            pc.dim(`Removed: ${result.removed.map((n) => `/${n}`).join(", ")}`),
+          );
+        if (result.skipped.length)
+          parts.push(
+            pc.yellow(
+              `Kept (foreign files): ${result.skipped.map((n) => `/${n}`).join(", ")}`,
+            ),
+          );
+        note(parts.join("\n") || pc.dim("Nothing to remove."), "✓ Disabled");
+      }
     }
   }
 }
