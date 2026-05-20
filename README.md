@@ -109,7 +109,12 @@ sqlite3 ~/.claude-kit/memory.db \
 
 #### Via Claude Code marketplace (recommended)
 
-Install the plugin through the Claude Code UI. On the first session start, the plugin automatically:
+```shell
+/plugin marketplace add rezaiyan/claude-plugins
+/plugin install claude-kit-v2@rezaiyan
+```
+
+On the first session start, the plugin automatically:
 
 - Installs its dependencies
 - Registers the `claudekit` command globally

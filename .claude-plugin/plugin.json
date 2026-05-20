@@ -1,56 +1,10 @@
 {
-  "name": "memory",
+  "name": "claude-kit-v2",
   "version": "0.1.0",
-  "description": "Cross-session memory for Claude Code — auto-summarises every session into SQLite, injects last 5 summaries on start. No re-briefing.",
-  "author": {
-    "name": "rezaiyan",
-    "url": "https://github.com/rezaiyan"
-  },
-  "keywords": ["memory", "sessions", "context", "sqlite", "productivity"],
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/memory/session-start.js\"",
-            "timeout": 10000
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/memory/user-prompt-submit.js\"",
-            "timeout": 5000
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/memory/stop.js\"",
-            "timeout": 15000
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/hooks/memory/session-end.js\"",
-            "timeout": 5000
-          }
-        ]
-      }
-    ]
-  }
+  "description": "Cross-session memory for Claude Code — auto-summarises every session into SQLite, injects last N summaries on start. No re-briefing. Includes TUI (claudekit) to manage tools.",
+  "author": { "name": "rezaiyan" },
+  "homepage": "https://github.com/rezaiyan/claude-kit-v2",
+  "repository": "https://github.com/rezaiyan/claude-kit-v2",
+  "license": "MIT",
+  "keywords": ["memory", "sessions", "context", "sqlite", "productivity"]
 }
