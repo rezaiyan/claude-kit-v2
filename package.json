@@ -1,0 +1,22 @@
+{
+  "name": "claude-kit-v2",
+  "version": "0.1.0",
+  "description": "Cross-session memory for Claude Code",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "bin": {
+    "claude-kit": "./bin/tui.js",
+    "claudekit": "./bin/tui.js"
+  },
+  "scripts": {
+    "tui": "bun run ./bin/tui.js",
+    "install": "bun run ./scripts/install.js",
+    "uninstall": "bun run ./scripts/uninstall.js"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.9.1",
+    "picocolors": "^1.1.1"
+  }
+}
