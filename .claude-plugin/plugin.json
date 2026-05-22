@@ -1,6 +1,6 @@
 {
   "name": "claude-kit-v2",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Quality-of-life hooks for Claude Code: cross-session memory (SQLite, no API calls), desktop notifications, and quality guards (blocks git --no-verify, protects secret files, auto-formats on edit). TUI to manage all tools.",
   "author": { "name": "rezaiyan" },
   "homepage": "https://github.com/rezaiyan/claude-kit-v2",
