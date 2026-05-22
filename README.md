@@ -129,9 +129,7 @@ Open a new terminal after that first session, then type `claudekit`.
 #### Manual install
 
 ```bash
-git clone https://github.com/rezaiyan/claude-kit-v2
-cd claude-kit-v2
-sh install.sh
+curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/install.sh | sh
 ```
 
 Open a new terminal and type `claudekit`.
