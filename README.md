@@ -20,8 +20,7 @@ On first session start, the plugin auto-installs its dependencies and registers 
 ### Via Homebrew
 
 ```bash
-brew tap rezaiyan/claudekit
-brew install claudekit
+brew install rezaiyan/claudekit/claudekit
 ```
 
 Then open a new terminal and run `claudekit`.
