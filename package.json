@@ -1,13 +1,12 @@
 {
-  "name": "claude-kit-v2",
+  "name": "claudekit",
   "version": "0.2.0",
-  "description": "Cross-session memory for Claude Code",
+  "description": "Quality-of-life hooks for Claude Code: cross-session memory, desktop notifications, quality guards, and TUI",
   "type": "module",
   "engines": {
     "bun": ">=1.0.0"
   },
   "bin": {
-    "claude-kit": "./bin/tui.js",
     "claudekit": "./bin/tui.js"
   },
   "scripts": {

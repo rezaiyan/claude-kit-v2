@@ -12,7 +12,7 @@ Inside Claude Code, run:
 
 ```
 /plugin marketplace add rezaiyan/claude-plugins
-/plugin install claude-kit-v2@rezaiyan
+/plugin install claudekit@rezaiyan
 ```
 
 On first session start, the plugin auto-installs its dependencies and registers the `claudekit` command. Open a new terminal, then run `claudekit` to manage tools.
@@ -20,7 +20,7 @@ On first session start, the plugin auto-installs its dependencies and registers 
 ### Via Homebrew
 
 ```bash
-brew install rezaiyan/claude-kit-v2
+brew install rezaiyan/claudekit
 ```
 
 Then open a new terminal and run `claudekit`.
@@ -28,10 +28,10 @@ Then open a new terminal and run `claudekit`.
 ### Uninstall
 
 ```bash
-brew uninstall rezaiyan/claude-kit-v2/claude-kit-v2
+brew uninstall rezaiyan/claudekit/claude-kit-v2
 ```
 
-Or if installed via marketplace, run `/plugin uninstall claude-kit-v2@rezaiyan` in Claude Code.
+Or if installed via marketplace, run `/plugin uninstall claudekit@rezaiyan` in Claude Code.
 
 ---
 

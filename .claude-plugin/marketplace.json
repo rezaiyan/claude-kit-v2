@@ -1,19 +1,19 @@
 {
-  "name": "claude-kit-v2",
+  "name": "claudekit",
   "owner": {
     "name": "Ali Rezaiyan"
   },
   "plugins": [
     {
-      "name": "claude-kit-v2",
+      "name": "claudekit",
       "source": "./",
       "description": "Memory tool: saves session summaries to local SQLite, injects recent context on start — no API calls, no token cost. Notify tool: macOS desktop notification on Stop.",
       "version": "0.2.0",
       "author": {
         "name": "Ali Rezaiyan"
       },
-      "homepage": "https://github.com/rezaiyan/claude-kit-v2",
-      "repository": "https://github.com/rezaiyan/claude-kit-v2",
+      "homepage": "https://github.com/rezaiyan/claudekit",
+      "repository": "https://github.com/rezaiyan/claudekit",
       "license": "MIT",
       "keywords": [
         "memory",
