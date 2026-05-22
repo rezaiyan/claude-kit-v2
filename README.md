@@ -28,7 +28,7 @@ Then open a new terminal and run `claudekit`.
 ### Uninstall
 
 ```bash
-brew uninstall claude-kit-v2
+brew uninstall rezaiyan/claude-kit-v2/claude-kit-v2
 ```
 
 Or if installed via marketplace, run `/plugin uninstall claude-kit-v2@rezaiyan` in Claude Code.
