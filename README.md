@@ -129,7 +129,7 @@ Open a new terminal after that first session, then type `claudekit`.
 #### Manual install
 
 ```bash
-brew install rezaiyan/tap/claude-kit-v2
+brew install rezaiyan/claude-kit-v2
 ```
 
 Open a new terminal and type `claudekit`.
