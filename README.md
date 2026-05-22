@@ -4,6 +4,37 @@ Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 
 ---
 
+## Install
+
+### Via Claude Code (recommended)
+
+Inside Claude Code, run:
+
+```
+/plugin marketplace add rezaiyan/claude-plugins
+/plugin install claude-kit-v2@rezaiyan
+```
+
+On first session start, the plugin auto-installs its dependencies and registers the `claudekit` command. Open a new terminal, then run `claudekit` to manage tools.
+
+### Via Homebrew
+
+```bash
+brew install rezaiyan/claude-kit-v2
+```
+
+Then open a new terminal and run `claudekit`.
+
+### Uninstall
+
+```bash
+brew uninstall claude-kit-v2
+```
+
+Or if installed via marketplace, run `/plugin uninstall claude-kit-v2@rezaiyan` in Claude Code.
+
+---
+
 ## Plugins
 
 | Plugin | Default | What it does |
@@ -12,6 +43,8 @@ Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 | [notify](#desktop-notify) | on | macOS desktop notification when Claude finishes a task |
 | [quality](#quality-guards) | on | Four hooks that block bad habits and auto-format on every edit |
 | [spec](#spec-workflow) | off | `/spec /implement /tdd /verify` slash command workflow |
+
+Toggle any tool with `claudekit` or `/claudekit` inside Claude Code.
 
 ---
 
@@ -106,60 +139,6 @@ sqlite3 ~/.claude-kit/memory.db \
   "SELECT project, request FROM summaries_fts WHERE summaries_fts MATCH 'auth login';"
 ```
 
-### Installation
-
-#### Via Claude Code marketplace (recommended)
-
-```bash
-# Add the marketplace (once)
-claude plugin marketplace add https://github.com/rezaiyan/claude-plugins
-
-# Install
-claude plugin install claude-kit-v2@rezaiyan
-```
-
-On the first session start, the plugin automatically:
-
-- Installs its dependencies
-- Registers the `claudekit` command globally
-- Adds `~/.bun/bin` to PATH in `~/.zshrc`
-
-Open a new terminal after that first session, then type `claudekit`.
-
-#### Manual install
-
-```bash
-brew install rezaiyan/claude-kit-v2
-```
-
-Open a new terminal and type `claudekit`.
-
-**Uninstall:**
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/uninstall.sh | sh
-```
-
-Removes the PATH entry it added and unregisters the command. Never touches PATH config it didn't create.
-
-**Register plugin with Claude Code:**
-
-If installed via the marketplace UI this is automatic. To register manually:
-
-```json
-// ~/.claude/settings.json
-{
-  "extraKnownMarketplaces": {
-    "claude-kit-v2": {
-      "source": { "source": "directory", "path": "/path/to/claude-kit-v2" }
-    }
-  },
-  "enabledPlugins": {
-    "claude-kit-v2@claude-kit-v2": true
-  }
-}
-```
-
 ---
 
 ## Desktop Notify
@@ -210,26 +189,6 @@ Four hooks that run silently on every edit and git operation. Enabled by default
 | `config-protection` | `PreToolUse:Write\|Edit` | Blocks writes to `.env`, `.env.*`, `.pem`, `.key`, `.p12`, `.pfx`, `.secret`, and any file matching `secrets`, `credentials`, or `.aws/credentials`. Edit these manually if intentional. |
 | `post-edit-format` | `PostToolUse:Write\|Edit` | Runs `prettier --write` on `.ts/.tsx/.js/.jsx` and `ktfmt --kotlinlang-style` on `.kt/.kts` after every edit. Silent if formatter not installed. |
 | `check-console-log` | `PostToolUse:Write\|Edit` | Prints a stderr warning if `console.log(` appears in a file under `src/` or `lib/`. Does not block — just reminds you to clean up before committing. |
-
-### How it works
-
-```
-You write a file
-  └── PreToolUse:Write|Edit fires
-        └── config-protection: is this a secrets file?
-              └── yes → block with explanation
-              └── no  → approve
-
-  └── PostToolUse:Write|Edit fires
-        └── post-edit-format: run prettier or ktfmt (silent on failure)
-        └── check-console-log: warn to stderr if console.log in src/
-
-You run a bash command
-  └── PreToolUse:Bash fires
-        └── block-no-verify: contains --no-verify?
-              └── yes → block with explanation
-              └── no  → approve
-```
 
 ### Toggle
 
