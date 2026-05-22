@@ -137,7 +137,6 @@ Open a new terminal after that first session, then type `claudekit`.
 ```bash
 git clone https://github.com/rezaiyan/claude-kit-v2
 cd claude-kit-v2
-bun install
 bun run install
 ```
 

@@ -27,7 +27,17 @@ if (zshrc.includes(MARKER)) {
   console.log("✓ Added ~/.bun/bin to PATH in ~/.zshrc");
 }
 
-// ── 2. bun link ──────────────────────────────────────────────────────────────
+// ── 2. deps ───────────────────────────────────────────────────────────────────
+
+try {
+  execSync("bun install", { cwd: import.meta.dir + "/..", stdio: "pipe" });
+  console.log("✓ Dependencies installed");
+} catch (e) {
+  console.error("✗ bun install failed:", e.stderr?.toString().trim());
+  process.exit(1);
+}
+
+// ── 3. bun link ──────────────────────────────────────────────────────────────
 
 try {
   execSync("bun link", { cwd: import.meta.dir + "/..", stdio: "pipe" });
