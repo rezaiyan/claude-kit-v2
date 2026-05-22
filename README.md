@@ -113,7 +113,7 @@ sqlite3 ~/.claude-kit/memory.db \
 #### Via Claude Code marketplace (recommended)
 
 ```shell
-/plugin marketplace add rezaiyan/claude-kit-v2
+/plugin marketplace add rezaiyan/claude-plugins
 /plugin install claude-kit-v2@rezaiyan
 ```
 
