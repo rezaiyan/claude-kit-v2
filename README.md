@@ -6,10 +6,12 @@ Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 
 ## Plugins
 
-| Plugin | What it does |
-|--------|-------------|
-| [memory](#memory) | Remembers what you worked on across sessions |
-| [notify](#desktop-notify) | macOS desktop notification when Claude finishes a task |
+| Plugin | Default | What it does |
+|--------|---------|-------------|
+| [memory](#memory) | on | Remembers what you worked on across sessions |
+| [notify](#desktop-notify) | on | macOS desktop notification when Claude finishes a task |
+| [quality](#quality-guards) | on | Four hooks that block bad habits and auto-format on every edit |
+| [spec](#spec-workflow) | off | `/spec /implement /tdd /verify` slash command workflow |
 
 ---
 
@@ -111,7 +113,7 @@ sqlite3 ~/.claude-kit/memory.db \
 #### Via Claude Code marketplace (recommended)
 
 ```shell
-/plugin marketplace add rezaiyan/claude-plugins
+/plugin marketplace add rezaiyan/claude-kit-v2
 /plugin install claude-kit-v2@rezaiyan
 ```
 
@@ -198,10 +200,77 @@ Or disable in config directly:
 
 ---
 
+## Quality Guards
+
+Four hooks that run silently on every edit and git operation. Enabled by default — nothing to configure. Silent when the relevant tool (prettier/ktfmt) isn't installed.
+
+### What each hook does
+
+| Hook | Fires on | What it does |
+|------|----------|-------------|
+| `block-no-verify` | `PreToolUse:Bash` | Blocks any `git --no-verify` command. Hooks exist for a reason — fix the failure, don't skip it. |
+| `config-protection` | `PreToolUse:Write\|Edit` | Blocks writes to `.env`, `.env.*`, `.pem`, `.key`, `.p12`, `.pfx`, `.secret`, and any file matching `secrets`, `credentials`, or `.aws/credentials`. Edit these manually if intentional. |
+| `post-edit-format` | `PostToolUse:Write\|Edit` | Runs `prettier --write` on `.ts/.tsx/.js/.jsx` and `ktfmt --kotlinlang-style` on `.kt/.kts` after every edit. Silent if formatter not installed. |
+| `check-console-log` | `PostToolUse:Write\|Edit` | Prints a stderr warning if `console.log(` appears in a file under `src/` or `lib/`. Does not block — just reminds you to clean up before committing. |
+
+### How it works
+
+```
+You write a file
+  └── PreToolUse:Write|Edit fires
+        └── config-protection: is this a secrets file?
+              └── yes → block with explanation
+              └── no  → approve
+
+  └── PostToolUse:Write|Edit fires
+        └── post-edit-format: run prettier or ktfmt (silent on failure)
+        └── check-console-log: warn to stderr if console.log in src/
+
+You run a bash command
+  └── PreToolUse:Bash fires
+        └── block-no-verify: contains --no-verify?
+              └── yes → block with explanation
+              └── no  → approve
+```
+
+### Toggle
+
+```bash
+claudekit
+# → select "Quality Guards" → Disable all
+```
+
+Or disable directly in config:
+
+```json
+{
+  "tools": {
+    "quality": { "enabled": false }
+  }
+}
+```
+
+When disabled, all four hooks immediately approve/continue — zero overhead.
+
+---
+
+## Spec Workflow
+
+Four slash commands for structured implementation: plan → implement → verify.
+
+```bash
+claudekit
+# → select "Spec Workflow" → Enable
+```
+
+Installs `/spec`, `/implement`, `/tdd`, `/verify` into `~/.claude/commands/`. Disabled by default — opt in when you want the full structured workflow.
+
+---
+
 ### Run tests
 
 ```bash
 bun test
 ```
 
-12 E2E tests. Each spins up an isolated DB in a tmp dir, runs the full hook lifecycle as real child processes, and verifies DB state + hook output.
+29 E2E tests. Memory hooks spin up an isolated SQLite DB per test. Quality hooks use an isolated config file per test. All hooks are invoked as real child processes — same execution boundary as Claude Code.
