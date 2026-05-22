@@ -2,6 +2,12 @@
 
 Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 
+**Requires [Bun](https://bun.sh).** Memory hooks use `bun:sqlite` — no Node fallback.
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
 ---
 
 ## Plugins
@@ -107,8 +113,6 @@ sqlite3 ~/.claude-kit/memory.db \
 ```
 
 ### Installation
-
-**Prerequisites:** [Bun](https://bun.sh) — install with `curl -fsSL https://bun.sh/install | bash`.
 
 #### Via Claude Code marketplace (recommended)
 
