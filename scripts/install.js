@@ -1,55 +1,97 @@
 #!/usr/bin/env bun
 /**
- * install.js — add ~/.bun/bin to PATH and register `claudekit` globally
+ * install.js — install deps, register `claudekit` globally, add PATH
  *
  * Idempotent: safe to run multiple times.
- * Uses a marker comment so uninstall.js can remove exactly what we added.
+ * Uses a marker comment so uninstall.js can remove exactly what was added.
  */
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import { execSync } from "child_process";
 
-const MARKER = "# added by claude-kit";
+const MARKER = "# added by claudekit";
 const ZSHRC = join(homedir(), ".zshrc");
 const BLOCK = `\n${MARKER}\nexport BUN_INSTALL="$HOME/.bun"\nexport PATH="$BUN_INSTALL/bin:$PATH"\n`;
 
-// ── 1. PATH ──────────────────────────────────────────────────────────────────
+const ok = (msg) => console.log(`  ✓ ${msg}`);
+const fail = (msg, hint) => {
+  console.error(`\n  ✗ ${msg}\n    ${hint}\n`);
+  process.exit(1);
+};
+const step = (n, total, msg) => console.log(`\n[${n}/${total}] ${msg}`);
 
-const zshrc = existsSync(ZSHRC) ? readFileSync(ZSHRC, "utf8") : "";
+const TOTAL = 3;
 
-if (zshrc.includes(MARKER)) {
-  console.log("✓ PATH already set (claude-kit marker found)");
-} else if (zshrc.includes("BUN_INSTALL") || zshrc.includes(".bun/bin")) {
-  console.log("✓ ~/.bun/bin already in ~/.zshrc (set by another tool)");
-} else {
-  writeFileSync(ZSHRC, zshrc + BLOCK);
-  console.log("✓ Added ~/.bun/bin to PATH in ~/.zshrc");
-}
+// ── 1. PATH ───────────────────────────────────────────────────────────────────
 
-// ── 2. deps ───────────────────────────────────────────────────────────────────
+step(1, TOTAL, "Setting up PATH");
 
 try {
-  execSync("bun install", { cwd: import.meta.dir + "/..", stdio: "pipe" });
-  console.log("✓ Dependencies installed");
+  const zshrc = existsSync(ZSHRC) ? readFileSync(ZSHRC, "utf8") : "";
+
+  if (zshrc.includes(MARKER)) {
+    ok("PATH already configured (claudekit marker found)");
+  } else if (zshrc.includes("BUN_INSTALL") || zshrc.includes(".bun/bin")) {
+    ok("~/.bun/bin already in ~/.zshrc (set by another tool)");
+  } else {
+    writeFileSync(ZSHRC, zshrc + BLOCK);
+    ok("Added ~/.bun/bin to PATH in ~/.zshrc");
+  }
 } catch (e) {
-  console.error("✗ bun install failed:", e.stderr?.toString().trim());
-  process.exit(1);
+  fail("Could not update ~/.zshrc", `Check file permissions: ls -la ${ZSHRC}`);
 }
 
-// ── 3. bun link ──────────────────────────────────────────────────────────────
+// ── 2. Dependencies ───────────────────────────────────────────────────────────
+
+step(2, TOTAL, "Installing dependencies");
 
 try {
-  execSync("bun link", { cwd: import.meta.dir + "/..", stdio: "pipe" });
-  console.log("✓ Registered claudekit globally");
+  execSync("bun install", {
+    cwd: import.meta.dir + "/..",
+    stdio: "pipe",
+    timeout: 60_000,
+  });
+  ok("Dependencies installed (@clack/prompts, picocolors)");
 } catch (e) {
-  console.error("✗ bun link failed:", e.stderr?.toString().trim());
-  process.exit(1);
+  const stderr = e.stderr?.toString().trim();
+  if (stderr) console.error(`    ${stderr}`);
+  fail(
+    "bun install failed",
+    "Check your internet connection, then retry: bun run install",
+  );
 }
 
-// ── Done ─────────────────────────────────────────────────────────────────────
+// ── 3. Register command ───────────────────────────────────────────────────────
 
-console.log(
-  "\nInstalled. Open a new terminal (or run: source ~/.zshrc) then type:",
-);
-console.log("\n  claudekit\n");
+step(3, TOTAL, "Registering claudekit command");
+
+try {
+  execSync("bun link", {
+    cwd: import.meta.dir + "/..",
+    stdio: "pipe",
+    timeout: 15_000,
+  });
+  ok("claudekit registered globally (~/.bun/bin/claudekit)");
+} catch (e) {
+  const stderr = e.stderr?.toString().trim();
+  if (stderr) console.error(`    ${stderr}`);
+  fail(
+    "bun link failed — claudekit command not registered",
+    "Try running manually: cd " + import.meta.dir + "/.. && bun link",
+  );
+}
+
+// ── Done ──────────────────────────────────────────────────────────────────────
+
+console.log(`
+╔══════════════════════════════════════════╗
+║   claudekit installed successfully!      ║
+╚══════════════════════════════════════════╝
+
+  Open a new terminal, then run:
+
+    claudekit
+
+  to choose which tools to enable.
+`);

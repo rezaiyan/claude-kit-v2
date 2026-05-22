@@ -19,21 +19,30 @@ const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT;
 const claudekitBin = join(homedir(), ".bun", "bin", "claudekit");
 
 let freshInstall = false;
+const installErrors = [];
 
 if (pluginRoot && !existsSync(claudekitBin)) {
+  // Step 1: install deps
   try {
-    // Install npm deps (@clack/prompts, picocolors)
     execSync("bun install", {
       cwd: pluginRoot,
       stdio: "pipe",
       timeout: 60_000,
     });
+  } catch (e) {
+    installErrors.push("deps: " + (e.stderr?.toString().trim() || e.message));
+  }
 
-    // Register `claudekit` command globally
+  // Step 2: register claudekit command
+  try {
     execSync("bun link", { cwd: pluginRoot, stdio: "pipe", timeout: 15_000 });
+  } catch (e) {
+    installErrors.push("link: " + (e.stderr?.toString().trim() || e.message));
+  }
 
-    // Add ~/.bun/bin to PATH in ~/.zshrc if not already present
-    const MARKER = "# added by claude-kit";
+  // Step 3: add ~/.bun/bin to PATH in ~/.zshrc
+  try {
+    const MARKER = "# added by claudekit";
     const ZSHRC = join(homedir(), ".zshrc");
     const zshrc = existsSync(ZSHRC) ? readFileSync(ZSHRC, "utf8") : "";
     if (!zshrc.includes(MARKER) && !zshrc.includes(".bun/bin")) {
@@ -43,21 +52,38 @@ if (pluginRoot && !existsSync(claudekitBin)) {
           `\n${MARKER}\nexport BUN_INSTALL="$HOME/.bun"\nexport PATH="$BUN_INSTALL/bin:$PATH"\n`,
       );
     }
-
-    freshInstall = true;
-  } catch {
-    // Never block session start — setup failure is non-fatal
+  } catch (e) {
+    installErrors.push("path: " + e.message);
   }
+
+  freshInstall = true;
 }
 
-// After fresh install, prompt user to configure tools before doing anything else
+// After fresh install, report status to Claude
 if (freshInstall) {
+  const ok = installErrors.length === 0;
+  const lines = ok
+    ? [
+        "**claudekit installed successfully.**",
+        "",
+        "Open a new terminal tab, then run `claudekit` to choose which tools to enable.",
+        "Until then, all tools are on by default.",
+      ]
+    : [
+        "**claudekit install completed with warnings.**",
+        "",
+        "Issues encountered:",
+        ...installErrors.map((e) => `- ${e}`),
+        "",
+        "To fix: open a terminal in the plugin directory and run `bun run install`.",
+        "Or reinstall: `/plugin uninstall claudekit@rezaiyan` then `/plugin install claudekit@rezaiyan`",
+      ];
+
   console.log(
     JSON.stringify({
       hookSpecificOutput: {
         hookEventName: "SessionStart",
-        additionalContext:
-          "**claude-kit installed!** Open a new terminal tab and run `claudekit` to choose which tools to enable. Until then, all tools are on by default.",
+        additionalContext: lines.join("\n"),
       },
     }),
   );
