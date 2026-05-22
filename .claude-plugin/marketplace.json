@@ -1,7 +1,5 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "claude-kit-v2",
-  "description": "Cross-session memory and desktop notifications for Claude Code — auto-summarises every session into SQLite, injects last N summaries on start. Includes TUI (claudekit) to manage tools.",
   "owner": {
     "name": "Ali Rezaiyan"
   },

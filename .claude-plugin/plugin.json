@@ -8,10 +8,5 @@
   "license": "MIT",
   "keywords": ["memory", "sessions", "context", "sqlite", "quality", "hooks", "formatter", "productivity"],
   "hooksConfig": "hooks/hooks.json",
-  "skills": [
-    { "name": "spec",       "path": "lib/spec-workflow/skills/spec" },
-    { "name": "implement",  "path": "lib/spec-workflow/skills/implement" },
-    { "name": "tdd",        "path": "lib/spec-workflow/skills/tdd" },
-    { "name": "verify",     "path": "lib/spec-workflow/skills/verify" }
-  ]
+  "skills": "./lib/spec-workflow/skills/"
 }
