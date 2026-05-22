@@ -19,6 +19,7 @@ import { tmpdir } from "os";
 import { join } from "path";
 
 const HOOKS_DIR = join(import.meta.dir, "../hooks/memory");
+const QUALITY_DIR = join(import.meta.dir, "../hooks/quality");
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,36 @@ function runHook(hook, payload, dbPath) {
     input: JSON.stringify(payload),
     encoding: "utf8",
     env: { ...process.env, CLAUDE_KIT_DB_PATH: dbPath },
+  });
+  if (result.error) throw result.error;
+  return {
+    stdout: result.stdout.trim(),
+    stderr: result.stderr.trim(),
+    status: result.status,
+    json: (() => {
+      try {
+        return JSON.parse(result.stdout.trim());
+      } catch {
+        return null;
+      }
+    })(),
+  };
+}
+
+function runQualityHook(hook, payload, { configPath, enabled = true } = {}) {
+  // Write a minimal config to a temp file so isToolEnabled reads it correctly
+  const env = { ...process.env };
+  if (configPath) {
+    writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, tools: { quality: { enabled } } }),
+    );
+    env.CLAUDE_KIT_CONFIG_PATH = configPath;
+  }
+  const result = spawnSync("bun", [join(QUALITY_DIR, `${hook}.js`)], {
+    input: JSON.stringify(payload),
+    encoding: "utf8",
+    env,
   });
   if (result.error) throw result.error;
   return {
@@ -335,6 +366,209 @@ describe("SessionEnd", () => {
   test("no-ops gracefully when session_id missing", () => {
     const r = runHook("session-end", { reason: "normal" }, dbPath);
     expect(r.status).toBe(0);
+  });
+});
+
+describe("Quality hooks", () => {
+  let configPath;
+
+  beforeEach(() => {
+    configPath = join(tmpDir, "config.json");
+  });
+
+  // ── block-no-verify ──────────────────────────────────────────────────────────
+
+  describe("block-no-verify", () => {
+    test("blocks git --no-verify", () => {
+      const r = runQualityHook(
+        "block-no-verify",
+        { tool_input: { command: "git commit --no-verify -m 'skip'" } },
+        { configPath },
+      );
+      expect(r.status).toBe(0);
+      expect(r.json?.decision).toBe("block");
+      expect(r.json?.reason).toMatch(/--no-verify/);
+    });
+
+    test("approves normal git commit", () => {
+      const r = runQualityHook(
+        "block-no-verify",
+        { tool_input: { command: "git commit -m 'normal'" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("approve");
+    });
+
+    test("approves non-git commands", () => {
+      const r = runQualityHook(
+        "block-no-verify",
+        { tool_input: { command: "npm test" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("approve");
+    });
+
+    test("approves everything when quality disabled", () => {
+      const r = runQualityHook(
+        "block-no-verify",
+        { tool_input: { command: "git commit --no-verify -m 'skip'" } },
+        { configPath, enabled: false },
+      );
+      expect(r.json?.decision).toBe("approve");
+    });
+  });
+
+  // ── config-protection ────────────────────────────────────────────────────────
+
+  describe("config-protection", () => {
+    test("blocks .env file", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/project/.env" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("block");
+      expect(r.json?.reason).toMatch(/\.env/);
+    });
+
+    test("blocks .env.production", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/project/.env.production" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("block");
+    });
+
+    test("blocks .pem file", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/certs/server.pem" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("block");
+    });
+
+    test("blocks secrets file", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/config/secrets.json" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("block");
+    });
+
+    test("approves normal source file", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/project/src/auth.ts" } },
+        { configPath },
+      );
+      expect(r.json?.decision).toBe("approve");
+    });
+
+    test("approves everything when quality disabled", () => {
+      const r = runQualityHook(
+        "config-protection",
+        { tool_input: { file_path: "/project/.env" } },
+        { configPath, enabled: false },
+      );
+      expect(r.json?.decision).toBe("approve");
+    });
+  });
+
+  // ── check-console-log ────────────────────────────────────────────────────────
+
+  describe("check-console-log", () => {
+    test("warns on console.log in src/ file", () => {
+      const r = runQualityHook(
+        "check-console-log",
+        {
+          tool_input: {
+            file_path: "/project/src/utils.ts",
+            new_string: 'function foo() { console.log("debug"); }',
+          },
+        },
+        { configPath },
+      );
+      expect(r.status).toBe(0);
+      expect(r.json).toMatchObject({ continue: true });
+      expect(r.stderr).toMatch(/console\.log/);
+    });
+
+    test("no warning for non-src file", () => {
+      const r = runQualityHook(
+        "check-console-log",
+        {
+          tool_input: {
+            file_path: "/project/scripts/debug.ts",
+            new_string: 'console.log("ok")',
+          },
+        },
+        { configPath },
+      );
+      expect(r.stderr).toBe("");
+    });
+
+    test("no warning when no console.log", () => {
+      const r = runQualityHook(
+        "check-console-log",
+        {
+          tool_input: {
+            file_path: "/project/src/utils.ts",
+            new_string: "function foo() { return 42; }",
+          },
+        },
+        { configPath },
+      );
+      expect(r.stderr).toBe("");
+    });
+
+    test("silent when quality disabled", () => {
+      const r = runQualityHook(
+        "check-console-log",
+        {
+          tool_input: {
+            file_path: "/project/src/utils.ts",
+            new_string: 'console.log("debug")',
+          },
+        },
+        { configPath, enabled: false },
+      );
+      expect(r.stderr).toBe("");
+    });
+  });
+
+  // ── post-edit-format ─────────────────────────────────────────────────────────
+
+  describe("post-edit-format", () => {
+    test("returns continue:true for any file", () => {
+      const r = runQualityHook(
+        "post-edit-format",
+        { tool_input: { file_path: "/project/src/foo.ts" } },
+        { configPath },
+      );
+      expect(r.status).toBe(0);
+      expect(r.json).toMatchObject({ continue: true });
+    });
+
+    test("returns continue:true for empty path", () => {
+      const r = runQualityHook(
+        "post-edit-format",
+        { tool_input: { file_path: "" } },
+        { configPath },
+      );
+      expect(r.json).toMatchObject({ continue: true });
+    });
+
+    test("returns continue:true when quality disabled", () => {
+      const r = runQualityHook(
+        "post-edit-format",
+        { tool_input: { file_path: "/project/src/foo.ts" } },
+        { configPath, enabled: false },
+      );
+      expect(r.json).toMatchObject({ continue: true });
+    });
   });
 });
 

@@ -1,12 +1,12 @@
 {
   "name": "claude-kit-v2",
   "version": "0.1.0",
-  "description": "Cross-session memory for Claude Code — auto-summarises every session into SQLite, injects last N summaries on start. No re-briefing. Includes TUI (claudekit) to manage tools.",
+  "description": "Quality-of-life hooks for Claude Code: cross-session memory (SQLite, no API calls), desktop notifications, and quality guards (blocks git --no-verify, protects secret files, auto-formats on edit). TUI to manage all tools.",
   "author": { "name": "rezaiyan" },
   "homepage": "https://github.com/rezaiyan/claude-kit-v2",
   "repository": "https://github.com/rezaiyan/claude-kit-v2",
   "license": "MIT",
-  "keywords": ["memory", "sessions", "context", "sqlite", "productivity"],
+  "keywords": ["memory", "sessions", "context", "sqlite", "quality", "hooks", "formatter", "productivity"],
   "hooksConfig": "hooks/hooks.json",
   "skills": [
     { "name": "spec",       "path": "lib/spec-workflow/skills/spec" },

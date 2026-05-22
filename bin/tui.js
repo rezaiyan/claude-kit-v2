@@ -115,6 +115,7 @@ async function mainMenu() {
     if (choice === "memory") await memoryMenu();
     if (choice === "notify") await notifyMenu();
     if (choice === "spec") await specMenu();
+    if (choice === "quality") await qualityMenu();
   }
 }
 
@@ -298,6 +299,54 @@ async function specMenu() {
           );
         note(parts.join("\n") || pc.dim("Nothing to remove."), "✓ Disabled");
       }
+    }
+  }
+}
+
+// ── Quality guards menu ────────────────────────────────────────────────────────
+
+async function qualityMenu() {
+  while (true) {
+    const config = getConfig();
+    const q = config.tools.quality ?? { enabled: true };
+
+    note(
+      [
+        `Status    ${q.enabled ? pc.green("● enabled") : pc.red("○ disabled")}`,
+        "",
+        `${pc.dim("block-no-verify")}   blocks git --no-verify`,
+        `${pc.dim("config-protection")} blocks writes to .env / .pem / secrets`,
+        `${pc.dim("post-edit-format")}  auto-runs prettier / ktfmt after edits`,
+        `${pc.dim("check-console-log")} warns on console.log in src/ or lib/`,
+      ].join("\n"),
+      "Quality Guards",
+    );
+
+    const choice = await select({
+      message: "Action",
+      options: [
+        {
+          value: "toggle",
+          label: q.enabled ? pc.red("Disable all") : pc.green("Enable all"),
+        },
+        { value: "back", label: "Back" },
+      ],
+    });
+
+    if (isCancel(choice) || choice === "back") break;
+
+    if (choice === "toggle") {
+      config.tools.quality = {
+        ...(config.tools.quality ?? {}),
+        enabled: !q.enabled,
+      };
+      saveConfig(config);
+      note(
+        config.tools.quality.enabled
+          ? pc.green("Quality guards enabled.")
+          : pc.dim("Quality guards disabled."),
+        "✓ Saved",
+      );
     }
   }
 }
