@@ -20,7 +20,8 @@ On first session start, the plugin auto-installs its dependencies and registers 
 ### Via Homebrew
 
 ```bash
-brew install rezaiyan/claudekit
+brew tap rezaiyan/claudekit
+brew install claudekit
 ```
 
 Then open a new terminal and run `claudekit`.
@@ -28,7 +29,7 @@ Then open a new terminal and run `claudekit`.
 ### Uninstall
 
 ```bash
-brew uninstall rezaiyan/claudekit/claude-kit-v2
+brew uninstall claudekit
 ```
 
 Or if installed via marketplace, run `/plugin uninstall claudekit@rezaiyan` in Claude Code.
