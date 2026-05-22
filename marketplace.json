@@ -1,0 +1,39 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "claude-kit-v2",
+  "description": "Cross-session memory and desktop notifications for Claude Code — auto-summarises every session into SQLite, injects last N summaries on start. Includes TUI (claudekit) to manage tools.",
+  "owner": {
+    "name": "Ali Rezaiyan"
+  },
+  "plugins": [
+    {
+      "name": "claude-kit-v2",
+      "source": "./",
+      "description": "Memory tool: saves session summaries to local SQLite, injects recent context on start — no API calls, no token cost. Notify tool: macOS desktop notification on Stop.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Ali Rezaiyan"
+      },
+      "homepage": "https://github.com/rezaiyan/claude-kit-v2",
+      "repository": "https://github.com/rezaiyan/claude-kit-v2",
+      "license": "MIT",
+      "keywords": [
+        "memory",
+        "sessions",
+        "context",
+        "sqlite",
+        "notify",
+        "productivity"
+      ],
+      "category": "workflow",
+      "tags": [
+        "memory",
+        "sessions",
+        "context",
+        "notify",
+        "productivity"
+      ],
+      "strict": false
+    }
+  ]
+}
