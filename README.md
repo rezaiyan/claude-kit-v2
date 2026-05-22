@@ -112,9 +112,12 @@ sqlite3 ~/.claude-kit/memory.db \
 
 #### Via Claude Code marketplace (recommended)
 
-```shell
-/plugin marketplace add rezaiyan/claude-plugins
-/plugin install claude-kit-v2@rezaiyan
+```bash
+# Add the marketplace (once)
+claude plugin marketplace add https://github.com/rezaiyan/claude-plugins
+
+# Install
+claude plugin install claude-kit-v2@rezaiyan
 ```
 
 On the first session start, the plugin automatically:
