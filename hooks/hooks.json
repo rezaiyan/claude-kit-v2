@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/memory/session-start.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/memory/session-start.js",
             "timeout": 10000
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/memory/user-prompt-submit.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/memory/user-prompt-submit.js",
             "timeout": 5000
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/quality/block-no-verify.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/quality/block-no-verify.js",
             "timeout": 3000
           }
         ]
@@ -38,7 +38,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/quality/config-protection.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/quality/config-protection.js",
             "timeout": 3000
           }
         ]
@@ -50,12 +50,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/quality/post-edit-format.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/quality/post-edit-format.js",
             "timeout": 15000
           },
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/quality/check-console-log.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/quality/check-console-log.js",
             "timeout": 5000
           }
         ]
@@ -66,12 +66,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/memory/stop.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/memory/stop.js",
             "timeout": 15000
           },
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/notify/stop.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/notify/stop.js",
             "timeout": 5000
           }
         ]
@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun $CLAUDE_PLUGIN_ROOT/hooks/memory/session-end.js",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/memory/session-end.js",
             "timeout": 5000
           }
         ]

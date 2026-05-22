@@ -2,12 +2,6 @@
 
 Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 
-**Requires [Bun](https://bun.sh).** Memory hooks use `bun:sqlite` — no Node fallback.
-
-```bash
-curl -fsSL https://bun.sh/install | bash
-```
-
 ---
 
 ## Plugins
@@ -137,7 +131,7 @@ Open a new terminal after that first session, then type `claudekit`.
 ```bash
 git clone https://github.com/rezaiyan/claude-kit-v2
 cd claude-kit-v2
-bun run install
+sh install.sh
 ```
 
 Open a new terminal and type `claudekit`.
