@@ -129,7 +129,7 @@ Open a new terminal after that first session, then type `claudekit`.
 #### Manual install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/install.sh | sh
+brew install rezaiyan/tap/claude-kit-v2
 ```
 
 Open a new terminal and type `claudekit`.
