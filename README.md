@@ -137,7 +137,7 @@ Open a new terminal and type `claudekit`.
 **Uninstall:**
 
 ```bash
-bun run uninstall
+curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/uninstall.sh | sh
 ```
 
 Removes the PATH entry it added and unregisters the command. Never touches PATH config it didn't create.
