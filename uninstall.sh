@@ -1,5 +1,5 @@
 #!/bin/sh
-# claude-kit-v2 uninstaller
+# claudekit uninstaller — no runtime dependencies required
 # Works piped from curl or run from inside the cloned repo.
 #
 # Usage:
@@ -9,24 +9,99 @@
 
 set -e
 
-export PATH="$HOME/.bun/bin:$PATH"
+ok()   { printf "  ✓ %s\n" "$1"; }
+info() { printf "  → %s\n" "$1"; }
 
-if ! command -v bun >/dev/null 2>&1; then
-  echo "Bun not found — installing to run uninstall script..."
-  curl -fsSL https://bun.sh/install | sh
-  export PATH="$HOME/.bun/bin:$PATH"
+SETTINGS="$HOME/.claude/settings.json"
+ZSHRC="$HOME/.zshrc"
+MARKER="# added by claudekit"
+
+printf "\n╔══════════════════════════════╗\n"
+printf   "║   claudekit uninstaller      ║\n"
+printf   "╚══════════════════════════════╝\n\n"
+
+# ── 1. Remove from Claude Code settings ──────────────────────────────────────
+
+if [ -f "$SETTINGS" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$SETTINGS" <<'PYEOF'
+import json, sys
+
+path = sys.argv[1]
+with open(path) as f:
+    settings = json.load(f)
+
+changed = False
+
+mp = settings.get("extraKnownMarketplaces", {})
+if "claude-kit-v2" in mp:
+    del mp["claude-kit-v2"]
+    changed = True
+
+ep = settings.get("enabledPlugins", {})
+for key in list(ep.keys()):
+    if "claude-kit-v2" in key:
+        del ep[key]
+        changed = True
+
+if changed:
+    with open(path, "w") as f:
+        json.dump(settings, f, indent=2)
+        f.write("\n")
+    print("  ✓ Removed claudekit from ~/.claude/settings.json")
+else:
+    print("  ✓ claudekit not found in settings.json (already clean)")
+PYEOF
+  else
+    info "python3 not found — skipping settings.json cleanup"
+    info "Manually remove 'claude-kit-v2' entries from $SETTINGS"
+  fi
+else
+  ok "settings.json not found (already clean)"
 fi
 
-REPO_DIR="$HOME/.claude-kit-v2-src"
+# ── 2. Remove claudekit command ───────────────────────────────────────────────
 
-if [ ! -f "package.json" ]; then
-  if [ -d "$REPO_DIR" ]; then
-    cd "$REPO_DIR"
-  else
-    echo "Cloning claude-kit-v2..."
-    git clone --depth 1 https://github.com/rezaiyan/claude-kit-v2.git "$REPO_DIR"
-    cd "$REPO_DIR"
+for d in "$HOME/.local/bin" "$HOME/bin" "$HOME/.bun/bin"; do
+  if [ -f "$d/claudekit" ]; then
+    rm "$d/claudekit"
+    ok "Removed claudekit from $d"
+  fi
+done
+
+# ── 3. Remove PATH entry from .zshrc ─────────────────────────────────────────
+
+if [ -f "$ZSHRC" ] && grep -q "$MARKER" "$ZSHRC" 2>/dev/null; then
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "$ZSHRC" "$MARKER" <<'PYEOF'
+import sys, re
+
+path, marker = sys.argv[1], sys.argv[2]
+with open(path) as f:
+    content = f.read()
+cleaned = re.sub(r'\n' + re.escape(marker) + r'\nexport PATH=.*\n', '\n', content)
+if cleaned != content:
+    with open(path, 'w') as f:
+        f.write(cleaned)
+    print("  ✓ Removed PATH entry from ~/.zshrc")
+else:
+    print("  ✓ No matching PATH entry found in ~/.zshrc")
+PYEOF
   fi
 fi
 
-bun run uninstall
+# ── 4. Remove source directory (optional) ────────────────────────────────────
+
+REPO_DIR="$HOME/.claudekit-src"
+if [ -d "$REPO_DIR" ]; then
+  printf "\n  Remove source directory %s? [y/N] " "$REPO_DIR"
+  read -r ans
+  case "$ans" in
+    [yY]*) rm -rf "$REPO_DIR"; ok "Removed $REPO_DIR" ;;
+    *)     ok "Kept $REPO_DIR" ;;
+  esac
+fi
+
+# ── Done ──────────────────────────────────────────────────────────────────────
+
+printf "\nUninstalled. Restart Claude Code for changes to take effect.\n\n"

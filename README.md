@@ -6,20 +6,35 @@ Claude Code plugin collection. No API calls, no cloud, no tokens wasted.
 
 ## Install
 
-### Via Claude Code (recommended)
+### Shell script (recommended)
 
-Inside Claude Code, run:
-
-```
-/plugin marketplace add rezaiyan/claude-plugins
-/plugin install claudekit@rezaiyan
-```
-
-On first session start, the plugin auto-installs its dependencies and registers the `claudekit` command. Open a new terminal, then run `claudekit` to manage tools.
-
-### Via Homebrew
+No dependencies required — just `git` and `python3` (both ship with macOS).
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/install.sh | sh
+```
+
+Or clone first and run locally:
+
+```bash
+git clone https://github.com/rezaiyan/claude-kit-v2.git
+cd claude-kit-v2
+sh install.sh
+```
+
+What install does:
+1. Clones the repo to `~/.claudekit-src` (or uses current directory)
+2. Registers the plugin in `~/.claude/settings.json`
+3. Creates a `claudekit` command in your bin directory
+
+Restart Claude Code, open a new terminal, then run `claudekit` to choose which tools to enable.
+
+> The `claudekit` TUI command requires [Bun](https://bun.sh) — it installs TUI dependencies automatically on first run. The hooks themselves work without any extra setup.
+
+### Homebrew
+
+```bash
+brew tap rezaiyan/claudekit
 brew install rezaiyan/claudekit/claudekit
 ```
 
@@ -27,11 +42,25 @@ Then open a new terminal and run `claudekit`.
 
 ### Uninstall
 
+**Shell install:**
+
+```bash
+sh ~/.claudekit-src/uninstall.sh
+```
+
+Or pipe directly:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rezaiyan/claude-kit-v2/main/uninstall.sh | sh
+```
+
+Removes the plugin from `~/.claude/settings.json`, deletes the `claudekit` command, and cleans up PATH entries. No Bun required.
+
+**Homebrew install:**
+
 ```bash
 brew uninstall rezaiyan/claudekit/claudekit
 ```
-
-Or if installed via marketplace, run `/plugin uninstall claudekit@rezaiyan` in Claude Code.
 
 ---
 
