@@ -17,6 +17,7 @@ import { spawnSync } from "child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
+import { mdToHtml } from "../hooks/plan/md-to-html.js";
 
 const HOOKS_DIR = join(import.meta.dir, "../hooks/memory");
 const QUALITY_DIR = join(import.meta.dir, "../hooks/quality");
@@ -569,6 +570,67 @@ describe("Quality hooks", () => {
       );
       expect(r.json).toMatchObject({ continue: true });
     });
+  });
+});
+
+describe("mdToHtml", () => {
+  test("converts h1/h2/h3 headings", () => {
+    const html = mdToHtml("# Title\n## Section\n### Sub");
+    expect(html).toContain("<h1>Title</h1>");
+    expect(html).toContain("<h2>Section</h2>");
+    expect(html).toContain("<h3>Sub</h3>");
+  });
+
+  test("converts bullet list", () => {
+    const html = mdToHtml("- item one\n- item two");
+    expect(html).toContain("<ul>");
+    expect(html).toContain("<li>item one</li>");
+    expect(html).toContain("<li>item two</li>");
+    expect(html).toContain("</ul>");
+  });
+
+  test("converts unchecked checkboxes", () => {
+    const html = mdToHtml("- [ ] do this");
+    expect(html).toContain('class="checklist"');
+    expect(html).toContain('type="checkbox"');
+    expect(html).not.toContain("checked");
+    expect(html).toContain("do this");
+  });
+
+  test("converts checked checkboxes", () => {
+    const html = mdToHtml("- [x] done this");
+    expect(html).toContain("checked");
+    expect(html).toContain("done this");
+  });
+
+  test("converts fenced code block", () => {
+    const html = mdToHtml("```js\nconst x = 1;\n```");
+    expect(html).toContain('<pre><code class="language-js">');
+    expect(html).toContain("const x = 1;");
+    expect(html).toContain("</code></pre>");
+  });
+
+  test("converts inline code", () => {
+    const html = mdToHtml("use `foo()` here");
+    expect(html).toContain("<code>foo()</code>");
+  });
+
+  test("converts bold and italic", () => {
+    const html = mdToHtml("**bold** and *italic*");
+    expect(html).toContain("<strong>bold</strong>");
+    expect(html).toContain("<em>italic</em>");
+  });
+
+  test("escapes HTML special chars in code blocks", () => {
+    const html = mdToHtml("```\n<script>alert(1)</script>\n```");
+    expect(html).not.toContain("<script>");
+    expect(html).toContain("&lt;script&gt;");
+  });
+
+  test("strips plan-type comment", () => {
+    const html = mdToHtml("<!-- plan-type: feature -->\n# Title");
+    expect(html).not.toContain("plan-type");
+    expect(html).toContain("<h1>Title</h1>");
   });
 });
 
