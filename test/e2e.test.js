@@ -14,7 +14,13 @@
 
 import { describe, test, expect, beforeEach, afterEach } from "bun:test";
 import { spawnSync } from "child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  readFileSync,
+} from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { mdToHtml } from "../hooks/plan/md-to-html.js";
@@ -838,6 +844,119 @@ describe("Full lifecycle", () => {
     expect(ctx).toContain("Implemented dark mode via CSS variables.");
     expect(ctx).toContain("/src/theme.css");
     expect(ctx).toContain("Edit");
+  });
+});
+
+describe("plan/post-tool-use", () => {
+  let configPath;
+  let plansDir;
+
+  beforeEach(() => {
+    configPath = join(tmpDir, "config.json");
+    plansDir = join(tmpDir, ".claude", "plans");
+    mkdirSync(plansDir, { recursive: true });
+  });
+
+  test("converts .md plan to .html and writes index", () => {
+    const mdPath = join(plansDir, "2026-05-25-my-feature.md");
+    writeFileSync(
+      mdPath,
+      "<!-- plan-type: feature -->\n# My Feature\n\n## Goal\nBuild it.\n",
+    );
+
+    const r = runPlanHook(
+      "post-tool-use",
+      { tool_name: "Write", tool_input: { file_path: mdPath } },
+      { configPath },
+    );
+
+    expect(r.status).toBe(0);
+    expect(r.json).toMatchObject({ continue: true });
+
+    const htmlPath = join(plansDir, "2026-05-25-my-feature.html");
+    const html = readFileSync(htmlPath, "utf8");
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("My Feature");
+    expect(html).toContain("Feature");
+
+    const indexHtml = readFileSync(join(plansDir, "index.html"), "utf8");
+    expect(indexHtml).toContain("2026-05-25-my-feature");
+  });
+
+  test("uses feature type when no plan-type comment", () => {
+    const mdPath = join(plansDir, "2026-05-25-no-type.md");
+    writeFileSync(mdPath, "# No Type Plan\n\n## Goal\nDefault.\n");
+
+    runPlanHook(
+      "post-tool-use",
+      { tool_name: "Write", tool_input: { file_path: mdPath } },
+      { configPath },
+    );
+
+    const htmlPath = join(plansDir, "2026-05-25-no-type.html");
+    const html = readFileSync(htmlPath, "utf8");
+    expect(html).toContain("#3b82f6");
+  });
+
+  test("no-ops for non-Write tool", () => {
+    const r = runPlanHook(
+      "post-tool-use",
+      {
+        tool_name: "Edit",
+        tool_input: { file_path: join(plansDir, "test.md") },
+      },
+      { configPath },
+    );
+    expect(r.json).toMatchObject({ continue: true, suppressOutput: true });
+  });
+
+  test("no-ops when path does not match .claude/plans/*.md", () => {
+    const r = runPlanHook(
+      "post-tool-use",
+      {
+        tool_name: "Write",
+        tool_input: { file_path: "/projects/myapp/src/index.ts" },
+      },
+      { configPath },
+    );
+    expect(r.json).toMatchObject({ continue: true, suppressOutput: true });
+  });
+
+  test("no-ops when plan tool disabled", async () => {
+    const mdPath = join(plansDir, "2026-05-25-disabled.md");
+    writeFileSync(mdPath, "<!-- plan-type: feature -->\n# Disabled\n");
+
+    const r = runPlanHook(
+      "post-tool-use",
+      { tool_name: "Write", tool_input: { file_path: mdPath } },
+      { configPath, enabled: false },
+    );
+    expect(r.json).toMatchObject({ continue: true, suppressOutput: true });
+
+    const { existsSync } = await import("node:fs");
+    const htmlPath = join(plansDir, "2026-05-25-disabled.html");
+    expect(existsSync(htmlPath)).toBe(false);
+  });
+
+  test("bug type plan produces red badge", () => {
+    const mdPath = join(plansDir, "2026-05-25-bug-report.md");
+    writeFileSync(
+      mdPath,
+      "<!-- plan-type: bug -->\n# Login Bug\n\n## Symptom\nCrashes.\n",
+    );
+
+    runPlanHook(
+      "post-tool-use",
+      { tool_name: "Write", tool_input: { file_path: mdPath } },
+      { configPath },
+    );
+
+    const html = readFileSync(
+      join(plansDir, "2026-05-25-bug-report.html"),
+      "utf8",
+    );
+    expect(html).toContain("#ef4444");
+    expect(html).toContain("Bug Investigation");
   });
 });
 
