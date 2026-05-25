@@ -18,6 +18,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 import { mdToHtml } from "../hooks/plan/md-to-html.js";
+import { renderPlan, renderIndex } from "../hooks/plan/templates.js";
 
 const HOOKS_DIR = join(import.meta.dir, "../hooks/memory");
 const QUALITY_DIR = join(import.meta.dir, "../hooks/quality");
@@ -631,6 +632,117 @@ describe("mdToHtml", () => {
     const html = mdToHtml("<!-- plan-type: feature -->\n# Title");
     expect(html).not.toContain("plan-type");
     expect(html).toContain("<h1>Title</h1>");
+  });
+});
+
+describe("renderPlan", () => {
+  const base = {
+    planType: "feature",
+    title: "My Feature",
+    date: "2026-05-25",
+    project: "myapp",
+    cwd: "/projects/myapp",
+    bodyHtml: "<h2>Goal</h2><p>Build it.</p>",
+    otherPlans: [],
+  };
+
+  test("produces valid HTML document", () => {
+    const html = renderPlan(base);
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("</html>");
+    expect(html).toContain("My Feature");
+  });
+
+  test("feature type shows blue badge", () => {
+    const html = renderPlan({ ...base, planType: "feature" });
+    expect(html).toContain("Feature");
+    expect(html).toContain("#3b82f6");
+  });
+
+  test("bug type shows red badge", () => {
+    const html = renderPlan({ ...base, planType: "bug" });
+    expect(html).toContain("Bug Investigation");
+    expect(html).toContain("#ef4444");
+  });
+
+  test("architecture type shows purple badge", () => {
+    const html = renderPlan({ ...base, planType: "architecture" });
+    expect(html).toContain("Architecture");
+    expect(html).toContain("#8b5cf6");
+  });
+
+  test("migration type shows orange badge", () => {
+    const html = renderPlan({ ...base, planType: "migration" });
+    expect(html).toContain("Migration");
+    expect(html).toContain("#f97316");
+  });
+
+  test("research type shows teal badge", () => {
+    const html = renderPlan({ ...base, planType: "research" });
+    expect(html).toContain("Research");
+    expect(html).toContain("#14b8a6");
+  });
+
+  test("renders sidebar links for otherPlans", () => {
+    const html = renderPlan({
+      ...base,
+      otherPlans: [
+        {
+          name: "2026-05-25-my-feature",
+          href: "2026-05-25-my-feature.html",
+          active: true,
+        },
+        {
+          name: "2026-05-24-other",
+          href: "2026-05-24-other.html",
+          active: false,
+        },
+      ],
+    });
+    expect(html).toContain("2026-05-25-my-feature");
+    expect(html).toContain("2026-05-24-other");
+  });
+
+  test("includes localStorage checkbox persistence script", () => {
+    const html = renderPlan(base);
+    expect(html).toContain("localStorage");
+    expect(html).toContain('type="checkbox"');
+  });
+
+  test("wraps H2 sections in section-card divs", () => {
+    const html = renderPlan({ ...base, bodyHtml: "<h2>Goal</h2><p>text</p>" });
+    expect(html).toContain("section-card");
+  });
+
+  test("unknown plan type falls back to feature styling", () => {
+    const html = renderPlan({ ...base, planType: "unknown" });
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain("#3b82f6");
+  });
+});
+
+describe("renderIndex", () => {
+  test("lists all plans", () => {
+    const html = renderIndex({
+      plans: [
+        { name: "2026-05-25-feature-a", href: "2026-05-25-feature-a.html" },
+        { name: "2026-05-24-bug-b", href: "2026-05-24-bug-b.html" },
+      ],
+      project: "myapp",
+      cwd: "/projects/myapp",
+    });
+    expect(html).toContain("2026-05-25-feature-a");
+    expect(html).toContain("2026-05-24-bug-b");
+    expect(html).toContain("<!DOCTYPE html>");
+  });
+
+  test("renders empty state when no plans", () => {
+    const html = renderIndex({
+      plans: [],
+      project: "myapp",
+      cwd: "/projects/myapp",
+    });
+    expect(html).toContain("<!DOCTYPE html>");
   });
 });
 
