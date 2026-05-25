@@ -115,12 +115,21 @@ const html = renderPlan({
   bodyHtml,
   otherPlans,
 });
-writeFileSync(htmlFilePath, html);
+try {
+  writeFileSync(htmlFilePath, html);
+} catch {
+  console.log(NOOP);
+  process.exit(0);
+}
 
 // ── Regenerate index.html ─────────────────────────────────────────────────────
 
-const indexHtml = renderIndex({ plans: otherPlans, project, cwd });
-writeFileSync(join(plansDir, "index.html"), indexHtml);
+try {
+  const indexHtml = renderIndex({ plans: otherPlans, project, cwd });
+  writeFileSync(join(plansDir, "index.html"), indexHtml);
+} catch {
+  /* index generation failure is non-fatal */
+}
 
 // ── Open browser ──────────────────────────────────────────────────────────────
 
