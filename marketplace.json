@@ -9,8 +9,8 @@
     {
       "name": "claudekit",
       "source": "./",
-      "description": "Memory tool: saves session summaries to local SQLite, injects recent context on start — no API calls, no token cost. Notify tool: macOS desktop notification on Stop.",
-      "version": "0.3.0",
+      "description": "Memory tool: saves session summaries to local SQLite, injects recent context on start — no API calls, no token cost. Notify tool: macOS desktop notification on Stop. HTML Plans tool: converts planning conversations to visual HTML files.",
+      "version": "0.4.0",
       "author": {
         "name": "Ali Rezaiyan"
       },
