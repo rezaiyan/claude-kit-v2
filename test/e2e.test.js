@@ -22,6 +22,7 @@ import { renderPlan, renderIndex } from "../hooks/plan/templates.js";
 
 const HOOKS_DIR = join(import.meta.dir, "../hooks/memory");
 const QUALITY_DIR = join(import.meta.dir, "../hooks/quality");
+const PLAN_DIR = join(import.meta.dir, "../hooks/plan");
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,42 @@ function runQualityHook(hook, payload, { configPath, enabled = true } = {}) {
     env.CLAUDE_KIT_CONFIG_PATH = configPath;
   }
   const result = spawnSync("bun", [join(QUALITY_DIR, `${hook}.js`)], {
+    input: JSON.stringify(payload),
+    encoding: "utf8",
+    env,
+  });
+  if (result.error) throw result.error;
+  return {
+    stdout: result.stdout.trim(),
+    stderr: result.stderr.trim(),
+    status: result.status,
+    json: (() => {
+      try {
+        return JSON.parse(result.stdout.trim());
+      } catch {
+        return null;
+      }
+    })(),
+  };
+}
+
+function runPlanHook(
+  hook,
+  payload,
+  { configPath, enabled = true, aggressiveness = "silent" } = {},
+) {
+  const env = { ...process.env };
+  if (configPath) {
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        version: 1,
+        tools: { plan: { enabled, aggressiveness } },
+      }),
+    );
+    env.CLAUDE_KIT_CONFIG_PATH = configPath;
+  }
+  const result = spawnSync("bun", [join(PLAN_DIR, `${hook}.js`)], {
     input: JSON.stringify(payload),
     encoding: "utf8",
     env,
@@ -801,5 +838,122 @@ describe("Full lifecycle", () => {
     expect(ctx).toContain("Implemented dark mode via CSS variables.");
     expect(ctx).toContain("/src/theme.css");
     expect(ctx).toContain("Edit");
+  });
+});
+
+describe("plan/user-prompt-submit", () => {
+  let configPath;
+
+  beforeEach(() => {
+    configPath = join(tmpDir, "config.json");
+  });
+
+  test("injects additionalContext when planning keyword detected", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "let's plan the new auth feature",
+        session_id: "s1",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    expect(r.status).toBe(0);
+    const ctx = r.json?.hookSpecificOutput?.additionalContext ?? "";
+    expect(ctx).toContain("HTML Plans");
+    expect(ctx).toContain("feature");
+  });
+
+  test("infers bug type from debug keyword", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "let's investigate why the login is broken",
+        session_id: "s2",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    const ctx = r.json?.hookSpecificOutput?.additionalContext ?? "";
+    expect(ctx).toContain("bug");
+  });
+
+  test("infers architecture type from architect keyword", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "architect the new data pipeline",
+        session_id: "s3",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    const ctx = r.json?.hookSpecificOutput?.additionalContext ?? "";
+    expect(ctx).toContain("architecture");
+  });
+
+  test("infers migration type from migrate keyword", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "migrate the database from postgres to sqlite",
+        session_id: "s4",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    const ctx = r.json?.hookSpecificOutput?.additionalContext ?? "";
+    expect(ctx).toContain("migration");
+  });
+
+  test("infers research type from spike keyword", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "spike on whether we should use redis here",
+        session_id: "s5",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    const ctx = r.json?.hookSpecificOutput?.additionalContext ?? "";
+    expect(ctx).toContain("research");
+  });
+
+  test("returns suppressOutput when no planning keyword", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      { prompt: "what is 2 + 2", session_id: "s6", cwd: "/projects/myapp" },
+      { configPath },
+    );
+    expect(r.json).toMatchObject({ suppressOutput: true });
+    expect(r.json?.hookSpecificOutput).toBeUndefined();
+  });
+
+  test("returns suppressOutput when plan tool disabled", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "plan the new auth feature",
+        session_id: "s7",
+        cwd: "/projects/myapp",
+      },
+      { configPath, enabled: false },
+    );
+    expect(r.json).toMatchObject({ suppressOutput: true });
+  });
+
+  test("strips system-reminder tags before keyword scan", () => {
+    const r = runPlanHook(
+      "user-prompt-submit",
+      {
+        prompt: "hello<system-reminder>plan something</system-reminder> world",
+        session_id: "s8",
+        cwd: "/projects/myapp",
+      },
+      { configPath },
+    );
+    // "plan" is inside a system-reminder tag — should be stripped, no injection
+    expect(r.json).toMatchObject({ suppressOutput: true });
   });
 });
