@@ -116,6 +116,7 @@ async function mainMenu() {
     if (choice === "notify") await notifyMenu();
     if (choice === "spec") await specMenu();
     if (choice === "quality") await qualityMenu();
+    if (choice === "plan") await planMenu();
   }
 }
 
@@ -298,6 +299,78 @@ async function specMenu() {
             ),
           );
         note(parts.join("\n") || pc.dim("Nothing to remove."), "✓ Disabled");
+      }
+    }
+  }
+}
+
+// ── HTML Plans menu ────────────────────────────────────────────────────────────
+
+async function planMenu() {
+  while (true) {
+    const config = getConfig();
+    const plan = config.tools.plan ?? {
+      enabled: false,
+      aggressiveness: "auto-open",
+    };
+
+    note(
+      [
+        `Status          ${plan.enabled ? pc.green("● enabled") : pc.red("○ disabled")}`,
+        `Aggressiveness  ${pc.bold(plan.aggressiveness ?? "auto-open")}`,
+        ``,
+        `${pc.dim("auto-open")}  converts plan → HTML and opens browser`,
+        `${pc.dim("silent")}    converts plan → HTML, prints path only`,
+        `${pc.dim("ask")}       converts plan → HTML, no auto-open`,
+      ].join("\n"),
+      "HTML Plans",
+    );
+
+    const choice = await select({
+      message: "Action",
+      options: [
+        {
+          value: "toggle",
+          label: plan.enabled ? pc.red("Disable") : pc.green("Enable"),
+        },
+        {
+          value: "aggressiveness",
+          label: "Browser open behavior",
+          hint: `current: ${plan.aggressiveness ?? "auto-open"}`,
+        },
+        { value: "back", label: "Back" },
+      ],
+    });
+
+    if (isCancel(choice) || choice === "back") break;
+
+    if (choice === "toggle") {
+      config.tools.plan = { ...plan, enabled: !plan.enabled };
+      saveConfig(config);
+      note(
+        config.tools.plan.enabled
+          ? pc.green("HTML Plans enabled.")
+          : pc.dim("HTML Plans disabled."),
+        "✓ Saved",
+      );
+    } else if (choice === "aggressiveness") {
+      const val = await select({
+        message: "When a plan is saved, Claude should:",
+        options: [
+          {
+            value: "auto-open",
+            label: "Open in browser automatically",
+            hint: "recommended",
+          },
+          { value: "silent", label: "Convert silently, print path" },
+          { value: "ask", label: "Convert only, no open or message" },
+        ],
+        initialValue: plan.aggressiveness ?? "auto-open",
+      });
+      if (!isCancel(val)) {
+        config.tools.plan = { ...plan, aggressiveness: val };
+        saveConfig(config);
+        note(`Aggressiveness set to ${pc.bold(val)}`, "✓ Saved");
       }
     }
   }
