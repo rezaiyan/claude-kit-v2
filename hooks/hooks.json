@@ -20,6 +20,15 @@
             "timeout": 5000
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/plan/user-prompt-submit.js",
+            "timeout": 5000
+          }
+        ]
       }
     ],
     "PreToolUse": [
@@ -57,6 +66,16 @@
             "type": "command",
             "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/quality/check-console-log.js",
             "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh $CLAUDE_PLUGIN_ROOT/hooks/run.sh $CLAUDE_PLUGIN_ROOT/hooks/plan/post-tool-use.js",
+            "timeout": 10000
           }
         ]
       }
